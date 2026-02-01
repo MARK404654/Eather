@@ -7,7 +7,7 @@ const express = require("express");
 // Express server for 24/7 uptime
 // ----------------------
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.get("/", (req, res) => {
   res.send("✅ Bot is online!");
