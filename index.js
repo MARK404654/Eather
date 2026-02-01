@@ -66,10 +66,7 @@ client.on("messageCreate", async (message) => {
             content:
               "You are a genius programmer AI named Eather. You know ALL programming languages and explain clearly with examples. Keep responses short enough to fit in Discord messages under 2000 characters. Always format code in triple backticks with language."
           },
-          {
-            role: "user",
-            content: prompt
-          }
+          { role: "user", content: prompt }
         ],
         temperature: 0.3,
         max_tokens: 800
@@ -89,10 +86,8 @@ client.on("messageCreate", async (message) => {
     }
 
     await message.reply(replyText);
-
   } catch (error) {
     const status = error.response?.status;
-
     if (status === 429) {
       message.reply("🚦 Rate limit hit. Please wait a few seconds.");
     } else {
@@ -102,5 +97,19 @@ client.on("messageCreate", async (message) => {
   }
 });
 
+// ----------------------
+// Self-ping to stay awake (free Render)
+// ----------------------
+const SELF_URL = process.env.SELF_URL;
+if (SELF_URL) {
+  setInterval(() => {
+    axios.get(SELF_URL)
+      .then(() => console.log("🌐 Self-ping successful"))
+      .catch(err => console.error("❌ Self-ping failed:", err.message));
+  }, 4 * 60 * 1000); // every 4 minutes
+}
+
+// ----------------------
 // Login to Discord
+// ----------------------
 client.login(process.env.DISCORD_TOKEN);
