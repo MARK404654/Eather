@@ -1,25 +1,7 @@
 require("dotenv").config();
 const { Client, GatewayIntentBits } = require("discord.js");
 const axios = require("axios");
-const express = require("express");
 
-// ----------------------
-// Express server for 24/7 uptime
-// ----------------------
-const app = express();
-const PORT = 3000;
-
-app.get("/", (req, res) => {
-  res.send("✅ Bot is online!");
-});
-
-app.listen(PORT, () => {
-  console.log(`🌐 Web server running on port ${PORT}`);
-});
-
-// ----------------------
-// Discord Bot Setup
-// ----------------------
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -28,21 +10,18 @@ const client = new Client({
   ]
 });
 
-// Cooldown setup
 const cooldowns = new Map();
-const COOLDOWN_MS = 3000; // 3 seconds per user
+const COOLDOWN_MS = 3000; 
 
-// Bot ready event
-client.once("ready", () => {
+client.once("clientReady", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-// Message handler
+
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (!message.content.startsWith("/eather")) return;
 
-  // Cooldown check
   const now = Date.now();
   const lastUsed = cooldowns.get(message.author.id) || 0;
   if (now - lastUsed < COOLDOWN_MS) {
@@ -64,7 +43,7 @@ client.on("messageCreate", async (message) => {
           {
             role: "system",
             content:
-              "You are a genius programmer AI named Eather. You know ALL programming languages and explain clearly with examples. Keep responses short enough to fit in Discord messages under 2000 characters. Always format code in triple backticks with language."
+              "You are a genius programmer AI. Your'e name is Eather, You know ALL programming languages and explain clearly with examples. Keep responses short enough to fit in Discord messages under 2000 characters. Always format code in triple backticks with language."
           },
           {
             role: "user",
@@ -82,10 +61,10 @@ client.on("messageCreate", async (message) => {
         timeout: 15000
       }
     );
-
-    let replyText = response.data.choices?.[0]?.message?.content || "❌ No response.";
+    let replyText = response.data.choices[0].message.content;
     if (replyText.length > 2000) {
-      replyText = replyText.slice(0, 2000) + "\n…[truncated]";
+      replyText = replyText.slice(0, 2000);
+      replyText += "\n…[truncated]";
     }
 
     await message.reply(replyText);
@@ -102,5 +81,4 @@ client.on("messageCreate", async (message) => {
   }
 });
 
-// Login to Discord
 client.login(process.env.DISCORD_TOKEN);
