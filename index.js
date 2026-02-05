@@ -3,10 +3,10 @@ const { Client, GatewayIntentBits } = require("discord.js");
 const axios = require("axios");
 const express = require("express");
 
+// --------------------- Web Server ---------------------
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Web server
 app.get("/", (req, res) => {
   res.send("✅ Bot is online!");
 });
@@ -15,7 +15,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Web server running on port ${PORT}`);
 });
 
-// Discord client
+// --------------------- Discord Client ---------------------
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -27,40 +27,39 @@ const client = new Client({
 const cooldowns = new Map();
 const COOLDOWN_MS = 3000;
 
-// READY EVENT (FIXED)
+// --------------------- Ready Event ---------------------
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
+  client.user.setPresence({
+    status: "online",
+    activities: [{ name: "Type !eather to chat", type: 0 }]
+  });
 });
 
-// ERROR LOGGING (ADDED)
+// --------------------- Error Logging ---------------------
 client.on("error", console.error);
 client.on("shardError", console.error);
-
 process.on("unhandledRejection", console.error);
 process.on("uncaughtException", console.error);
 
-// MESSAGE HANDLER
+// --------------------- Message Handler ---------------------
 client.on("messageCreate", async (message) => {
+  console.log(`[DEBUG] Message received from ${message.author.tag}: "${message.content}"`);
+
   if (message.author.bot) return;
-  if (!message.content.startsWith("!eather")) return;
+
+  const prefix = "!eather";
+  if (!message.content.toLowerCase().startsWith(prefix)) return;
 
   const now = Date.now();
   const lastUsed = cooldowns.get(message.author.id) || 0;
-
   if (now - lastUsed < COOLDOWN_MS) {
     return message.reply("⏳ Slow down! Try again in a few seconds.");
   }
-
   cooldowns.set(message.author.id, now);
 
-  // FIXED PROMPT
-  const prompt = message.content
-    .slice("!eather".length)
-    .trim();
-
-  if (!prompt) {
-    return message.reply("❌ Please provide a prompt.");
-  }
+  const prompt = message.content.slice(prefix.length).trim();
+  if (!prompt) return message.reply("❌ Please provide a prompt.");
 
   try {
     await message.channel.sendTyping();
@@ -89,19 +88,17 @@ client.on("messageCreate", async (message) => {
       }
     );
 
-    let replyText =
-      response.data.choices?.[0]?.message?.content ||
-      "❌ No response.";
+    let replyText = response.data.choices?.[0]?.message?.content || "❌ No response.";
+    if (replyText.length > 2000) replyText = replyText.slice(0, 2000) + "\n…[truncated]";
 
-    if (replyText.length > 2000) {
-      replyText = replyText.slice(0, 2000) + "\n…[truncated]";
+    try {
+      await message.reply(replyText);
+    } catch (err) {
+      console.error("[ERROR] Failed to reply:", err.message);
     }
-
-    await message.reply(replyText);
 
   } catch (error) {
     const status = error.response?.status;
-
     if (status === 429) {
       message.reply("🚦 Rate limit hit. Please wait a few seconds.");
     } else {
@@ -111,18 +108,16 @@ client.on("messageCreate", async (message) => {
   }
 });
 
-// Self ping
+// --------------------- Self Ping (Keep Render Awake) ---------------------
 const SELF_URL = process.env.SELF_URL;
 
 if (SELF_URL) {
   setInterval(() => {
     axios.get(SELF_URL)
       .then(() => console.log("🌐 Self-ping successful"))
-      .catch(err =>
-        console.error("❌ Self-ping failed:", err.message)
-      );
+      .catch(err => console.error("❌ Self-ping failed:", err.message));
   }, 4 * 60 * 1000);
 }
 
-// LOGIN
+// --------------------- Login ---------------------
 client.login(process.env.DISCORD_TOKEN);
