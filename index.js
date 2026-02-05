@@ -3,9 +3,6 @@ const { Client, GatewayIntentBits } = require("discord.js");
 const axios = require("axios");
 const express = require("express");
 
-// ----------------------
-// Express server for 24/7 uptime
-// ----------------------
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -17,9 +14,6 @@ app.listen(PORT, () => {
   console.log(`🌐 Web server running on port ${PORT}`);
 });
 
-// ----------------------
-// Discord Bot Setup
-// ----------------------
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -28,21 +22,17 @@ const client = new Client({
   ]
 });
 
-// Cooldown setup
 const cooldowns = new Map();
-const COOLDOWN_MS = 3000; // 3 seconds per user
+const COOLDOWN_MS = 3000;
 
-// Bot ready event
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-// Message handler
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (!message.content.startsWith("/eather")) return;
 
-  // Cooldown check
   const now = Date.now();
   const lastUsed = cooldowns.get(message.author.id) || 0;
   if (now - lastUsed < COOLDOWN_MS) {
@@ -97,9 +87,6 @@ client.on("messageCreate", async (message) => {
   }
 });
 
-// ----------------------
-// Self-ping to stay awake (free Render)
-// ----------------------
 const SELF_URL = process.env.SELF_URL;
 if (SELF_URL) {
   setInterval(() => {
@@ -109,7 +96,4 @@ if (SELF_URL) {
   }, 4 * 60 * 1000); // every 4 minutes
 }
 
-// ----------------------
-// Login to Discord
-// ----------------------
 client.login(process.env.DISCORD_TOKEN);
