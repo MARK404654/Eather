@@ -28,7 +28,7 @@ const cooldowns = new Map();
 const COOLDOWN_MS = 3000;
 
 // --------------------- Ready Event ---------------------
-client.once("ready", () => {
+client.once("clientReady", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   client.user.setPresence({
     status: "online",
