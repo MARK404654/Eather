@@ -95,6 +95,7 @@ client.on("messageCreate", async (message) => {
       await message.reply(replyText);
     } catch (err) {
       console.error("[ERROR] Failed to reply:", err.message);
+      await message.channel.send("❌ I couldn’t send a reply. Check my permissions.");
     }
 
   } catch (error) {
@@ -120,4 +121,11 @@ if (SELF_URL) {
 }
 
 // --------------------- Login ---------------------
-client.login(process.env.DISCORD_TOKEN);
+if (!process.env.DISCORD_TOKEN) {
+  console.error("❌ DISCORD_TOKEN is not set. Check your .env file or Render environment variables.");
+  process.exit(1);
+}
+
+client.login(process.env.DISCORD_TOKEN)
+  .then(() => console.log("🔑 Bot login successful"))
+  .catch(err => console.error("❌ Bot login failed:", err.message));
