@@ -6,6 +6,7 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Web server
 app.get("/", (req, res) => {
   res.send("✅ Bot is online!");
 });
@@ -14,6 +15,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Web server running on port ${PORT}`);
 });
 
+// Discord client
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -25,23 +27,40 @@ const client = new Client({
 const cooldowns = new Map();
 const COOLDOWN_MS = 3000;
 
+// READY EVENT (FIXED)
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
+// ERROR LOGGING (ADDED)
+client.on("error", console.error);
+client.on("shardError", console.error);
+
+process.on("unhandledRejection", console.error);
+process.on("uncaughtException", console.error);
+
+// MESSAGE HANDLER
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
-  if (!message.content.startsWith("/eather")) return;
+  if (!message.content.startsWith("!eather")) return;
 
   const now = Date.now();
   const lastUsed = cooldowns.get(message.author.id) || 0;
+
   if (now - lastUsed < COOLDOWN_MS) {
-    return message.reply(`⏳ Slow down! Try again in a few seconds.`);
+    return message.reply("⏳ Slow down! Try again in a few seconds.");
   }
+
   cooldowns.set(message.author.id, now);
 
-  const prompt = message.content.slice(7).trim();
-  if (!prompt) return message.reply("❌ Please provide a prompt.");
+  // FIXED PROMPT
+  const prompt = message.content
+    .slice("!eather".length)
+    .trim();
+
+  if (!prompt) {
+    return message.reply("❌ Please provide a prompt.");
+  }
 
   try {
     await message.channel.sendTyping();
@@ -70,14 +89,19 @@ client.on("messageCreate", async (message) => {
       }
     );
 
-    let replyText = response.data.choices?.[0]?.message?.content || "❌ No response.";
+    let replyText =
+      response.data.choices?.[0]?.message?.content ||
+      "❌ No response.";
+
     if (replyText.length > 2000) {
       replyText = replyText.slice(0, 2000) + "\n…[truncated]";
     }
 
     await message.reply(replyText);
+
   } catch (error) {
     const status = error.response?.status;
+
     if (status === 429) {
       message.reply("🚦 Rate limit hit. Please wait a few seconds.");
     } else {
@@ -87,13 +111,18 @@ client.on("messageCreate", async (message) => {
   }
 });
 
+// Self ping
 const SELF_URL = process.env.SELF_URL;
+
 if (SELF_URL) {
   setInterval(() => {
     axios.get(SELF_URL)
       .then(() => console.log("🌐 Self-ping successful"))
-      .catch(err => console.error("❌ Self-ping failed:", err.message));
-  }, 4 * 60 * 1000); // every 4 minutes
+      .catch(err =>
+        console.error("❌ Self-ping failed:", err.message)
+      );
+  }, 4 * 60 * 1000);
 }
 
+// LOGIN
 client.login(process.env.DISCORD_TOKEN);
